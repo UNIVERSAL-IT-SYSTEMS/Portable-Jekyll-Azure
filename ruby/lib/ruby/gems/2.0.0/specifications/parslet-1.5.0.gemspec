@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://kschiess.github.com/parslet"
   s.rdoc_options = ["--main", "README"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "2.0.3"
+  s.rubygems_version = "2.0.14"
   s.summary = "Parser construction library with great error reporting in Ruby."
 
   if s.respond_to? :specification_version then

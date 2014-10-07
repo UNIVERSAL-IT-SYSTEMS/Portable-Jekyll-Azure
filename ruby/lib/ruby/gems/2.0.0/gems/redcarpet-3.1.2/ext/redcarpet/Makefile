@@ -11,12 +11,12 @@ ECHO = $(ECHO1:0=@echo)
 #### Start of system configuration section. ####
 
 srcdir = .
-topdir = /d/PortableJekyll/x86/ruby/include/ruby-2.0.0
+topdir = /C/Users/user/Documents/GitHub/PortableJekyll/ruby/include/ruby-2.0.0
 hdrdir = $(topdir)
-arch_hdrdir = d:/PortableJekyll/x86/ruby/include/ruby-2.0.0/i386-mingw32
+arch_hdrdir = C:/Users/user/Documents/GitHub/PortableJekyll/ruby/include/ruby-2.0.0/i386-mingw32
 PATH_SEPARATOR = :
 VPATH = $(srcdir):$(arch_hdrdir)/ruby:$(hdrdir)/ruby
-prefix = /d/PortableJekyll/x86/ruby
+prefix = /C/Users/user/Documents/GitHub/PortableJekyll/ruby
 rubysitearchprefix = $(rubylibprefix)/$(sitearch)
 rubyarchprefix = $(rubylibprefix)/$(arch)
 rubylibprefix = $(libdir)/$(RUBY_BASE_NAME)
@@ -30,8 +30,8 @@ rubyhdrdir = $(includedir)/$(RUBY_VERSION_NAME)
 vendorarchdir = $(vendorlibdir)/$(sitearch)
 vendorlibdir = $(vendordir)/$(ruby_version)
 vendordir = $(rubylibprefix)/vendor_ruby
-sitearchdir = ./.gem.20140614-4548-c7foyv
-sitelibdir = ./.gem.20140614-4548-c7foyv
+sitearchdir = ./.gem.20141007-11132-oht993
+sitelibdir = ./.gem.20141007-11132-oht993
 sitedir = $(rubylibprefix)/site_ruby
 rubyarchdir = $(rubylibdir)/$(arch)
 rubylibdir = $(rubylibprefix)/$(ruby_version)

@@ -14,6 +14,6 @@ Gem::Specification.new do |s|
   s.files = ["LICENSE", "README", "ext/extconf.rb"]
   s.homepage = "http://github.com/romanbsd/fast-stemmer"
   s.require_paths = ["lib"]
-  s.rubygems_version = "2.0.3"
+  s.rubygems_version = "2.0.14"
   s.summary = "Fast Porter stemmer based on a C version of algorithm"
 end

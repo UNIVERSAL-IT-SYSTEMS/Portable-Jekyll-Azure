@@ -11,7 +11,7 @@
   (See the file 'LICENCE'.)
 
 = Version
-  $Id: ssl.rb 41672 2013-06-27 11:11:11Z nagachika $
+  $Id: ssl.rb 46579 2014-06-27 08:17:35Z usa $
 =end
 
 require "openssl/buffering"
@@ -98,7 +98,7 @@ module OpenSSL
       should_verify_common_name = true
       cert.extensions.each{|ext|
         next if ext.oid != "subjectAltName"
-        id, ostr = OpenSSL::ASN1.decode(ext.to_der).value
+        ostr = OpenSSL::ASN1.decode(ext.to_der).value.last
         sequence = OpenSSL::ASN1.decode(ostr.value)
         sequence.value.each{|san|
           case san.tag
@@ -177,7 +177,10 @@ module OpenSSL
       end
 
       def accept
-        sock = @svr.accept
+        # Socket#accept returns [socket, addrinfo].
+        # TCPServer#accept returns a socket.
+        # The following comma strips addrinfo.
+        sock, = @svr.accept
         begin
           ssl = OpenSSL::SSL::SSLSocket.new(sock, @ctx)
           ssl.sync_close = true

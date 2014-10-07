@@ -12,6 +12,6 @@ Gem::Specification.new do |s|
   s.files = ["History.md", "README.md"]
   s.homepage = "http://www.liquidmarkup.org"
   s.require_paths = ["lib"]
-  s.rubygems_version = "2.0.3"
+  s.rubygems_version = "2.0.14"
   s.summary = "A secure, non-evaling end user template engine with aesthetic markup."
 end

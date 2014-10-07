@@ -299,6 +299,10 @@ module MakeMakefile
       @log.sync = true
     end
 
+    def self::log_opened?
+      @log and not @log.closed?
+    end
+
     def self::open
       log_open
       $stderr.reopen(@log)
@@ -352,7 +356,7 @@ module MakeMakefile
   def xsystem command, opts = nil
     varpat = /\$\((\w+)\)|\$\{(\w+)\}/
     if varpat =~ command
-      vars = Hash.new {|h, k| h[k] = ''; ENV[k]}
+      vars = Hash.new {|h, k| h[k] = ENV[k]}
       command = command.dup
       nil while command.gsub!(varpat) {vars[$1||$2]}
     end
@@ -1054,9 +1058,17 @@ SRC
   # the +HAVE_FRAMEWORK_RUBY+ preprocessor macro would be passed to the
   # compiler.
   #
+  # If +fw+ is a pair of the framework name and its header file name
+  # that header file is checked, instead of the normally used header
+  # file which is named same as the framework.
   def have_framework(fw, &b)
+    if Array === fw
+      fw, header = *fw
+    else
+      header = "#{fw}.h"
+    end
     checking_for fw do
-      src = cpp_include("#{fw}/#{fw}.h") << "\n" "int main(void){return 0;}"
+      src = cpp_include("#{fw}/#{header}") << "\n" "int main(void){return 0;}"
       opt = " -framework #{fw}"
       if try_link(src, "-ObjC#{opt}", &b)
         $defs.push(format("-DHAVE_FRAMEWORK_%s", fw.tr_cpp))
@@ -1709,12 +1721,14 @@ SRC
       # default to package specific config command, as a last resort.
       get = proc {|opt| `#{pkgconfig} --#{opt}`.strip}
     end
+    orig_ldflags = $LDFLAGS
     if get and try_ldflags(ldflags = get['libs'])
       cflags = get['cflags']
       libs = get['libs-only-l']
       ldflags = (Shellwords.shellwords(ldflags) - Shellwords.shellwords(libs)).quote.join(" ")
       $CFLAGS += " " << cflags
-      $LDFLAGS += " " << ldflags
+      $CXXFLAGS += " " << cflags
+      $LDFLAGS = [orig_ldflags, ldflags].join(' ')
       $libs += " " << libs
       Logging::message "package configuration for %s\n", pkg
       Logging::message "cflags: %s\nldflags: %s\nlibs: %s\n\n",
@@ -1798,6 +1812,7 @@ VPATH = #{vpath.join(CONFIG['PATH_SEPARATOR'])}
     prefix = mkintpath(CONFIG["prefix"])
     if destdir = prefix[$dest_prefix_pattern, 1]
       mk << "\nDESTDIR = #{destdir}\n"
+      prefix = prefix[destdir.size..-1]
     end
     mk << "prefix = #{with_destdir(prefix).unspace}\n"
     CONFIG.each do |key, var|
@@ -1845,7 +1860,7 @@ CFLAGS   = $(CCDLFLAGS) #$CFLAGS $(ARCH_FLAG)
 INCFLAGS = -I. #$INCFLAGS
 DEFS     = #{CONFIG['DEFS']}
 CPPFLAGS = #{extconf_h}#{$CPPFLAGS}
-CXXFLAGS = $(CCDLFLAGS) #{CONFIG['CXXFLAGS']} $(ARCH_FLAG)
+CXXFLAGS = $(CCDLFLAGS) #$CXXFLAGS $(ARCH_FLAG)
 ldflags  = #{$LDFLAGS}
 dldflags = #{$DLDFLAGS} #{CONFIG['EXTDLDFLAGS']}
 ARCH_FLAG = #{$ARCH_FLAG}
@@ -2325,6 +2340,7 @@ site-install-rb: install-rb
       $warnflags = config['warnflags'] unless $extmk
     end
     $CFLAGS = with_config("cflags", arg_config("CFLAGS", config["CFLAGS"])).dup
+    $CXXFLAGS = (with_config("cxxflags", arg_config("CXXFLAGS", config["CXXFLAGS"]))||'').dup
     $ARCH_FLAG = with_config("arch_flag", arg_config("ARCH_FLAG", config["ARCH_FLAG"])).dup
     $CPPFLAGS = with_config("cppflags", arg_config("CPPFLAGS", config["CPPFLAGS"])).dup
     $LDFLAGS = with_config("ldflags", arg_config("LDFLAGS", config["LDFLAGS"])).dup

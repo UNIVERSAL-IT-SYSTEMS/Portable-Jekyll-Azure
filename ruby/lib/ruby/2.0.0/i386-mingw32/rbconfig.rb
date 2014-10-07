@@ -13,7 +13,7 @@ module RbConfig
   CONFIG["MAJOR"] = "2"
   CONFIG["MINOR"] = "0"
   CONFIG["TEENY"] = "0"
-  CONFIG["PATCHLEVEL"] = "247"
+  CONFIG["PATCHLEVEL"] = "576"
   CONFIG["INSTALL"] = '/usr/bin/install -c'
   CONFIG["EXEEXT"] = ".exe"
   CONFIG["prefix"] = (TOPDIR || DESTDIR + "")
@@ -100,6 +100,7 @@ module RbConfig
   CONFIG["ARCHFILE"] = ""
   CONFIG["LIBRUBY_RELATIVE"] = "yes"
   CONFIG["EXTOUT"] = ".ext"
+  CONFIG["RUNRUBY_COMMAND"] = "$(MINIRUBY) $(srcdir)/tool/runruby.rb --extout=$(EXTOUT) $(RUNRUBYOPT)"
   CONFIG["PREP"] = "miniruby$(EXEEXT)"
   CONFIG["BTESTRUBY"] = "$(MINIRUBY)"
   CONFIG["CROSS_COMPILING"] = "no"
@@ -187,7 +188,7 @@ module RbConfig
   CONFIG["build_vendor"] = "pc"
   CONFIG["build_cpu"] = "i686"
   CONFIG["build"] = "i686-pc-mingw32"
-  CONFIG["RUBY_RELEASE_DATE"] = "2013-06-27"
+  CONFIG["RUBY_RELEASE_DATE"] = "2014-09-19"
   CONFIG["RUBY_PROGRAM_VERSION"] = "2.0.0"
   CONFIG["target_alias"] = ""
   CONFIG["host_alias"] = ""

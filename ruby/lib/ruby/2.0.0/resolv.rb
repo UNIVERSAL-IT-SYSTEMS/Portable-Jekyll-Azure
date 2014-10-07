@@ -186,7 +186,7 @@ class Resolv
         unless @initialized
           @name2addr = {}
           @addr2name = {}
-          open(@filename) {|f|
+          open(@filename, 'rb') {|f|
             f.each {|line|
               line.sub!(/#.*/, '')
               addr, hostname, *aliases = line.split(/\s+/)
@@ -515,8 +515,9 @@ class Resolv
           msg.rd = 1
           msg.add_question(candidate, typeclass)
           unless sender = senders[[candidate, nameserver, port]]
-            sender = senders[[candidate, nameserver, port]] =
-              requester.sender(msg, candidate, nameserver, port)
+            sender = requester.sender(msg, candidate, nameserver, port)
+            next if !sender
+            senders[[candidate, nameserver, port]] = sender
           end
           reply, reply_name = requester.request(sender, tout)
           case reply.rcode
@@ -645,7 +646,9 @@ class Resolv
       begin
         port = rangerand(1024..65535)
         udpsock.bind(bind_host, port)
-      rescue Errno::EADDRINUSE
+      rescue Errno::EADDRINUSE, # POSIX
+             Errno::EACCES, # SunOS: See PRIV_SYS_NFS in privileges(5)
+             Errno::EPERM # FreeBSD: security.mac.portacl.port_high is configurable.  See mac_portacl(4).
         retry
       end
     end
@@ -725,7 +728,11 @@ class Resolv
               af = Socket::AF_INET
             end
             next if @socks_hash[bind_host]
-            sock = UDPSocket.new(af)
+            begin
+              sock = UDPSocket.new(af)
+            rescue Errno::EAFNOSUPPORT
+              next # The kernel doesn't support the address family.
+            end
             sock.do_not_reverse_lookup = true
             sock.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC) if defined? Fcntl::F_SETFD
             DNS.bind_random_port(sock, bind_host)
@@ -740,11 +747,12 @@ class Resolv
         end
 
         def sender(msg, data, host, port=Port)
+          sock = @socks_hash[host.index(':') ? "::" : "0.0.0.0"]
+          return nil if !sock
           service = [host, port]
           id = DNS.allocate_request_id(host, port)
           request = msg.encode
           request[0,2] = [id].pack('n')
-          sock = @socks_hash[host.index(':') ? "::" : "0.0.0.0"]
           return @senders[[service, id]] =
             Sender.new(request, data, sock, host, port)
         end
@@ -765,6 +773,7 @@ class Resolv
           attr_reader :data
 
           def send
+            raise "@sock is nil." if @sock.nil?
             @sock.send(@msg, 0, @host, @port)
           end
         end
@@ -808,6 +817,7 @@ class Resolv
 
         class Sender < Requester::Sender # :nodoc:
           def send
+            raise "@sock is nil." if @sock.nil?
             @sock.send(@msg, 0)
           end
           attr_reader :data
@@ -889,7 +899,7 @@ class Resolv
         nameserver = []
         search = nil
         ndots = 1
-        open(filename) {|f|
+        open(filename, 'rb') {|f|
           f.each {|line|
             line.sub!(/[#;].*/, '')
             keyword, *args = line.split(/\s+/)
@@ -1489,6 +1499,7 @@ class Resolv
         end
 
         def get_bytes(len = @limit - @index)
+          raise DecodeError.new("limit exceeded") if @limit < @index + len
           d = @data[@index, len]
           @index += len
           return d
@@ -1516,6 +1527,7 @@ class Resolv
         end
 
         def get_string
+          raise DecodeError.new("limit exceeded") if @limit <= @index
           len = @data[@index].ord
           raise DecodeError.new("limit exceeded") if @limit < @index + 1 + len
           d = @data[@index + 1, len]
@@ -1539,6 +1551,7 @@ class Resolv
           limit = @index if !limit || @index < limit
           d = []
           while true
+            raise DecodeError.new("limit exceeded") if @limit <= @index
             case @data[@index].ord
             when 0
               @index += 1
@@ -1932,10 +1945,10 @@ class Resolv
         attr_reader :strings
 
         ##
-        # Returns the first string from +strings+.
+        # Returns the concatenated string from +strings+.
 
         def data
-          @strings[0]
+          @strings.join("")
         end
 
         def encode_rdata(msg) # :nodoc:
